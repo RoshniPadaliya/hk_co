@@ -3,8 +3,7 @@ services:
     name: hk-webflow-ai-chatbot
     env: node
     buildCommand: npm install
-    startCommand: node src/index.js
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      
