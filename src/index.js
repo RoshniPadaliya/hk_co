@@ -4,8 +4,6 @@ import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
 import { config } from "./config.js";
 import chatRoutes from "./routes/chat.js";
 
@@ -38,23 +36,10 @@ app.use("/api/", limiter);
 // --- Routes ---
 app.use("/api", chatRoutes);
 
-// --- Fix __dirname for ES modules ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// --- Serve frontend from /public ---
-app.use(express.static(path.join(__dirname, "../public")));
-
 // --- Health Check ---
-app.get("/health", (req, res) => {
-  res.send("🤖 HK Webflow AI Chatbot API running...");
-});
-
-// --- Catch-all: send index.html for frontend routes ---
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
-
+app.get("/", (req, res) =>
+  res.send("🤖 HK Webflow AI Chatbot API running...")
+);
 
 // --- Start Server & Connect to MongoDB ---
 (async function start() {
@@ -69,7 +54,7 @@ app.get(/.*/, (req, res) => {
 
     // Start Express server
     app.listen(config.port, () =>
-      console.log(`🚀 Server + Frontend running at: http://localhost:${config.port}`)
+      console.log(`🚀 API running on port: ${config.port}`)
     );
   } catch (err) {
     console.error("❌ Failed to start server:", err);

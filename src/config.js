@@ -14,4 +14,3 @@ export const config = {
     : ["http://localhost:8080", "http://[::1]:8080"],
   maxContextTokens: parseInt(process.env.MAX_CONTEXT_TOKENS || "7000", 10),
 };
-  
