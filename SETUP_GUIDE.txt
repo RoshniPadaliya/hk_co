@@ -1,0 +1,150 @@
+# Hari Krishna Exports AI Chatbot - Setup Guide
+
+## 🚀 Quick Start
+
+### 1. Environment Setup
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# MongoDB Connection
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/hk-chatbot?retryWrites=true&w=majority
+
+# OpenAI API Key
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# Website Configuration
+BASE_URL=https://www.hk.co
+
+# CORS Origins (comma-separated)
+ALLOWED_ORIGINS=http://localhost:8080
+
+# Server Configuration
+PORT=8080
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Database Setup
+- Create a MongoDB Atlas account
+- Create a new cluster and database
+- Update the `MONGO_URI` in your `.env` file
+
+### 4. Scrape Website Content
+```bash
+npm run scrape
+```
+This will crawl the HK.co website and extract all content for AI training.
+
+### 5. Seed FAQ Data
+```bash
+npm run ingest
+```
+This will populate the database with comprehensive company-specific FAQ data.
+
+### 6. Start the Server
+```bash
+npm run dev
+```
+The API will be available at `http://localhost:8080`
+
+## 📋 API Endpoints
+
+### Health Check
+```
+GET /api/health
+```
+
+### Fixed Responses
+```
+GET /api/fixed?key=welcome
+```
+
+### Chat Interface
+```
+POST /api/chat
+{
+  "message": "Tell me about your diamonds"
+}
+```
+
+## 🎯 AI Training Features
+
+### Enhanced Web Scraping
+- **Full website crawling** - Discovers and scrapes all pages
+- **Content filtering** - Removes non-content pages and files
+- **Respectful scraping** - Built-in delays to avoid server overload
+- **Error handling** - Robust error recovery and logging
+
+### Comprehensive FAQ System
+- **12+ predefined responses** covering all company aspects
+- **Smart keyword matching** for instant responses
+- **Structured options** for guided conversations
+- **Company-specific data** tailored for Hari Krishna Exports
+
+### Advanced AI Configuration
+- **Strict company-only responses** - Prevents hallucinations
+- **Professional diamond terminology** - Industry-appropriate language
+- **Quality assurance focus** - Emphasizes company standards
+- **Ethical sourcing emphasis** - Highlights sustainability practices
+
+## 🔧 Customization
+
+### Adding New FAQ Entries
+Edit `scripts/ingest.js` and add to the `seed` array:
+
+```javascript
+{
+  key: 'your_topic',
+  question: 'User question',
+  answer: 'Company response',
+  options: ['Option 1', 'Option 2', 'Back to main menu']
+}
+```
+
+### Modifying AI Behavior
+Edit `src/services/ai.js` to update the system prompt and response guidelines.
+
+### Adjusting Scraping Parameters
+Modify `src/scraper/scrape.js` for:
+- Maximum pages to scrape
+- Scraping delays
+- URL filtering rules
+
+## 🚀 Deployment
+
+### Recommended Platforms
+- **Render** - For API deployment
+- **MongoDB Atlas** - For database
+- **Vercel** - For frontend integration
+
+### Environment Variables for Production
+```env
+NODE_ENV=production
+ALLOWED_ORIGINS=https://your-production-domain.com
+```
+
+## 📊 Monitoring & Maintenance
+
+### Regular Updates
+- Schedule weekly scraping to keep content current
+- Review and update FAQ data quarterly
+- Monitor AI response quality
+
+### Performance Optimization
+- Consider MongoDB Atlas Vector Search for production
+- Implement caching for frequent queries
+- Set up logging and analytics
+
+## 🆘 Troubleshooting
+
+### Common Issues
+1. **MongoDB Connection Failed** - Check MONGO_URI format
+2. **OpenAI API Errors** - Verify API key validity
+3. **CORS Issues** - Update ALLOWED_ORIGINS
+4. **Scraping Timeouts** - Increase timeout values if needed
+
+### Support
+For technical support, contact your development team or refer to the application logs.

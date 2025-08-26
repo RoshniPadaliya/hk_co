@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HK Chatbot Widget</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Chatbot container */
+        #hk-chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Chat bubble (entry point) */
+        .hk-chat-bubble {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .hk-chat-bubble:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .hk-chat-bubble.active {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+        }
+
+        .hk-chat-bubble svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        /* Pulse animation */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Chat window */
+        .hk-chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .hk-chat-window.open {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            .hk-chat-window {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                z-index: 10001;
+            }
+        }
+
+        /* Chat header */
+        .hk-chat-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hk-chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hk-chat-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .hk-chat-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .hk-chat-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .hk-chat-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .hk-chat-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Chat messages area */
+        .hk-chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .hk-chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .hk-chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .hk-chat-messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        /* Message bubbles */
+        .hk-message {
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hk-message.bot {
+            align-self: flex-start;
+        }
+
+        .hk-message.user {
+            align-self: flex-end;
+        }
+
+        .hk-message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .hk-message.bot .hk-message-bubble {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 6px;
+        }
+
+        .hk-message.user .hk-message-bubble {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .hk-message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .hk-message.bot .hk-message-time {
+            text-align: left;
+        }
+
+        /* Quick reply buttons */
+        .hk-quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .hk-quick-reply {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .hk-quick-reply:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        /* Typing indicator */
+        .hk-typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            max-width: 80px;
+        }
+
+        .hk-typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .hk-typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .hk-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .hk-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Chat input */
+        .hk-chat-input {
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .hk-input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .hk-chat-input textarea {
+            width: 100%;
+            min-height: 40px;
+            max-height: 120px;
+            padding: 10px 40px 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .hk-chat-input textarea:focus {
+            border-color: #3b82f6;
+        }
+
+        .hk-chat-input textarea::placeholder {
+            color: #9ca3af;
+        }
+
+        .hk-send-button {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            width: 28px;
+            height: 28px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .hk-send-button:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .hk-send-button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hk-send-button svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        /* Welcome message */
+        .hk-welcome {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .hk-welcome h3 {
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .hk-welcome p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* Loading animation */
+        .hk-loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hk-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .hk-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Accessibility */
+        .hk-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .hk-chat-window {
+                background: #1f2937;
+                border-color: #374151;
+            }
+            
+            .hk-chat-messages {
+                background: #111827;
+            }
+            
+            .hk-message.bot .hk-message-bubble {
+                background: #374151;
+                border-color: #4b5563;
+                color: #f9fafb;
+            }
+            
+            .hk-chat-input {
+                background: #1f2937;
+                border-color: #374151;
+            }
+            
+            .hk-chat-input textarea {
+                background: #374151;
+                border-color: #4b5563;
+                color: #f9fafb;
+            }
+            
+            .hk-quick-reply {
+                background: #374151;
+                border-color: #4b5563;
+                color: #f9fafb;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="hk-chatbot-container">
+        <div class="hk-chat-bubble" id="hk-chat-bubble" role="button" tabindex="0" aria-label="Open chat">
+            <svg viewBox="0 0 24 24">
+                <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.17L4 17.17V4H20V16Z"/>
+                <circle cx="7" cy="10" r="1"/>
+                <circle cx="12" cy="10" r="1"/>
+                <circle cx="17" cy="10" r="1"/>
+            </svg>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="hk-chat-window" id="hk-chat-window" role="dialog" aria-labelledby="chat-title" aria-hidden="true">
+            <!-- Header -->
+            <div class="hk-chat-header">
+                <div class="hk-chat-header-info">
+                    <div class="hk-chat-avatar">💎</div>
+                    <div>
+                        <div class="hk-chat-title" id="chat-title">HK Virtual Diamond Expert</div>
+                        <div class="hk-chat-subtitle">Online • Ready to help</div>
+                    </div>
+                </div>
+                <button class="hk-chat-close" id="hk-chat-close" aria-label="Close chat">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="hk-chat-messages" id="hk-chat-messages" role="log" aria-live="polite">
+                <!-- Welcome message will be inserted here -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="hk-chat-input">
+                <div class="hk-input-container">
+                    <textarea 
+                        id="hk-chat-input-field" 
+                        placeholder="Ask me about diamonds, our company, or how I can help..."
+                        rows="1"
+                        aria-label="Type your message"
+                    ></textarea>
+                    <button class="hk-send-button" id="hk-send-button" aria-label="Send message" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // HK Chatbot Widget Implementation
+        class HKChatbot {
+            constructor(config = {}) {
+                this.config = {
+                    apiEndpoint: config.apiEndpoint || 'http://localhost:8080/api/chatbot/smart-search',
+                    sessionTimeout: config.sessionTimeout || 30 * 60 * 1000, // 30 minutes
+                    maxRetries: config.maxRetries || 3,
+                    retryDelay: config.retryDelay || 1000,
+                    ...config
+                };
+
+                this.sessionId = this.getOrCreateSessionId();
+                this.isOpen = false;
+                this.isLoading = false;
+                this.messageQueue = [];
+                this.retryCount = 0;
+
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.setupAccessibility();
+                this.showWelcomeMessage();
+                
+                // Auto-resize textarea
+                this.setupAutoResize();
+                
+                // Session management
+                this.setupSessionManagement();
+                
+                console.log('🚀 HK Chatbot initialized with session:', this.sessionId);
+            }
+
+            bindEvents() {
+                const bubble = document.getElementById('hk-chat-bubble');
+                const window = document.getElementById('hk-chat-window');
+                const closeBtn = document.getElementById('hk-chat-close');
+                const sendBtn = document.getElementById('hk-send-button');
+                const input = document.getElementById('hk-chat-input-field');
+
+                // Open/close chat
+                bubble.addEventListener('click', () => this.toggleChat());
+                bubble.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.toggleChat();
+                    }
+                });
+
+                closeBtn.addEventListener('click', () => this.closeChat());
+                closeBtn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.closeChat();
+                    }
+                });
+
+                // Send message
+                sendBtn.addEventListener('click', () => this.sendMessage());
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Enable/disable send button
+                input.addEventListener('input', () => {
+                    const hasText = input.value.trim().length > 0;
+                    sendBtn.disabled = !hasText || this.isLoading;
+                });
+
+                // Close on escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isOpen) {
+                        this.closeChat();
+                    }
+                });
+
+                // Close on outside click
+                document.addEventListener('click', (e) => {
+                    if (this.isOpen && !window.contains(e.target) && !bubble.contains(e.target)) {
+                        this.closeChat();
+                    }
+                });
+            }
+
+            setupAccessibility() {
+                const messages = document.getElementById('hk-chat-messages');
+                messages.setAttribute('aria-label', 'Chat conversation');
+            }
+
+            setupAutoResize() {
+                const textarea = document.getElementById('hk-chat-input-field');
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                });
+            }
+
+            setupSessionManagement() {
+                // Clear session on tab close
+                window.addEventListener('beforeunload', () => {
+                    this.cleanupSession();
+                });
+
+                // Refresh session on focus
+                window.addEventListener('focus', () => {
+                    this.refreshSession();
+                });
+            }
+
+            getOrCreateSessionId() {
+                let sessionId = sessionStorage.getItem('hk_chat_session');
+                
+                if (!sessionId) {
+                    sessionId = 'hk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    sessionStorage.setItem('hk_chat_session', sessionId);
+                    sessionStorage.setItem('hk_chat_created', Date.now().toString());
+                }
+
+                // Check if session is expired
+                const created = parseInt(sessionStorage.getItem('hk_chat_created'));
+                if (Date.now() - created > this.config.sessionTimeout) {
+                    sessionStorage.removeItem('hk_chat_session');
+                    sessionStorage.removeItem('hk_chat_created');
+                    return this.getOrCreateSessionId();
+                }
+
+                return sessionId;
+            }
+
+            refreshSession() {
+                sessionStorage.setItem('hk_chat_updated', Date.now().toString());
+            }
+
+            cleanupSession() {
+                // Could send session end event to backend
+                this.refreshSession();
+            }
+
+            toggleChat() {
+                if (this.isOpen) {
+                    this.closeChat();
+                } else {
+                    this.openChat();
+                }
+            }
+
+            openChat() {
+                const bubble = document.getElementById('hk-chat-bubble');
+                const window = document.getElementById('hk-chat-window');
+                const input = document.getElementById('hk-chat-input-field');
+
+                bubble.classList.add('active');
+                window.classList.add('open');
+                window.setAttribute('aria-hidden', 'false');
+                
+                this.isOpen = true;
+                
+                // Focus on input
+                setTimeout(() => {
+                    input.focus();
+                }, 300);
+
+                // Analytics
+                this.trackEvent('chat_opened');
+            }
+
+            closeChat() {
+                const bubble = document.getElementById('hk-chat-bubble');
+                const window = document.getElementById('hk-chat-window');
+
+                bubble.classList.remove('active');
+                window.classList.remove('open');
+                window.setAttribute('aria-hidden', 'true');
+                
+                this.isOpen = false;
+
+                // Analytics
+                this.trackEvent('chat_closed');
+            }
+
+            showWelcomeMessage() {
+                const welcomeMessage = {
+                    type: 'bot',
+                    content: "Welcome to Hari Krishna Exports! I'm your virtual diamond expert, here to guide you through our diamonds and our entities. How can I help you today?",
+                    suggestions: [
+                        { text: "Learn about our company", action: "company_info" },
+                        { text: "Explore our diamonds", action: "diamond_types" },
+                        { text: "Discover our entities", action: "entities" },
+                        { text: "Sustainability & events", action: "sustainability" }
+                    ],
+                    timestamp: new Date()
+                };
+
+                this.displayMessage(welcomeMessage);
+            }
+
+            // async sendMessage() {
+            //     const input = document.getElementById('hk-chat-input-field');
+            //     const message = input.value.trim();
+
+            //     if (!message || this.isLoading) return;
+
+            //     // Clear input and disable send button
+            //     input.value = '';
+            //     input.style.height = 'auto';
+            //     this.updateSendButton(false);
+
+            //     // Display user message
+            //     this.displayMessage({
+            //         type: 'user',
+            //         content: message,
+            //         timestamp: new Date()
+            //     });
+
+            //     // Show typing indicator
+            //     this.showTypingIndicator();
+
+            //     try {
+            //         const response = await this.callAPI(message);
+            //         this.hideTypingIndicator();
+                    
+            //         if (response.success) {
+            //             this.displayMessage({
+            //                 type: 'bot',
+            //                 content: response.message,
+            //                 suggestions: response.suggestions || [],
+            //                 timestamp: new Date(),
+            //                 metadata: response.metadata
+            //             });
+                        
+            //             this.retryCount = 0; // Reset retry count on success
+            //         } else {
+            //             throw new Error(response.error || 'Unknown error occurred');
+            //         }
+
+            //     } catch (error) {
+            //         this.hideTypingIndicator();
+            //         this.handleError(error, message);
+            //     }
+
+            async sendMessage() {
+    const input = document.getElementById('hk-chat-input-field');
+    const message = input.value.trim();
+
+    if (!message || this.isLoading) return;
+
+    // Clear input and disable send button
+    input.value = '';
+    input.style.height = 'auto';
+    this.updateSendButton(false);
+
+    // Display user message
+    this.displayMessage({
+        type: 'user',
+        content: message,
+        timestamp: new Date()
+    });
+
+    // Show typing indicator
+    this.showTypingIndicator();
+
+    try {
+        // 🔹 Updated: direct fetch call to backend
+        const response = await fetch("/api/chatbot/smart-search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: message,
+                sessionId: "abc123" // optional
+            })
+        });
+
+        const data = await response.json();
+        this.hideTypingIndicator();
+
+        if (data && data.success) {
+            this.displayMessage({
+                type: 'bot',
+                content: data.message,
+                suggestions: data.suggestions || [],
+                timestamp: new Date(),
+                metadata: data.metadata
+            });
+            this.retryCount = 0; // Reset retry count on success
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+
+    } catch (error) {
+        this.hideTypingIndicator();
+        this.handleError(error, message);
+    }
+
+
+
+                // Analytics
+                this.trackEvent('message_sent', { message_length: message.length });
+            }
+
+            async callAPI(message, intent = null) {
+                const payload = {
+                    message,
+                    intent,
+                    sessionId: this.sessionId,
+                    timestamp: new Date().toISOString()
+                };
+
+                const response = await fetch(this.config.apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'include' // Include cookies for session
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            }
+
+            displayMessage(message) {
+                const messagesContainer = document.getElementById('hk-chat-messages');
+                const messageEl = document.createElement('div');
+                messageEl.className = `hk-message ${message.type}`;
+
+                const bubbleEl = document.createElement('div');
+                bubbleEl.className = 'hk-message-bubble';
+                bubbleEl.textContent = message.content;
+
+                const timeEl = document.createElement('div');
+                timeEl.className = 'hk-message-time';
+                timeEl.textContent = this.formatTime(message.timestamp);
+
+                messageEl.appendChild(bubbleEl);
+                messageEl.appendChild(timeEl);
+
+                // Add suggestions for bot messages
+                if (message.type === 'bot' && message.suggestions && message.suggestions.length > 0) {
+                    const suggestionsEl = document.createElement('div');
+                    suggestionsEl.className = 'hk-quick-replies';
+
+                    message.suggestions.forEach(suggestion => {
+                        const suggestionEl = document.createElement('button');
+                        suggestionEl.className = 'hk-quick-reply';
+                        suggestionEl.textContent = suggestion.text;
+                        suggestionEl.addEventListener('click', () => {
+                            this.handleSuggestionClick(suggestion);
+                        });
+                        suggestionsEl.appendChild(suggestionEl);
+                    });
+
+                    messageEl.appendChild(suggestionsEl);
+                }
+
+                messagesContainer.appendChild(messageEl);
+                this.scrollToBottom();
+
+                // Announce to screen readers
+                if (message.type === 'bot') {
+                    this.announceToScreenReader(message.content);
+                }
+            }
+
+            handleSuggestionClick(suggestion) {
+                // Remove all suggestion buttons to prevent duplicate clicks
+                const suggestions = document.querySelectorAll('.hk-quick-replies');
+                suggestions.forEach(el => el.remove());
+
+                // Display user message
+                this.displayMessage({
+                    type: 'user',
+                    content: suggestion.text,
+                    timestamp: new Date()
+                });
+
+                // Show typing indicator
+                this.showTypingIndicator();
+
+                // Send message with intent
+                setTimeout(async () => {
+                    try {
+                        const response = await this.callAPI(suggestion.text, suggestion.action);
+                        this.hideTypingIndicator();
+                        
+                        if (response.success) {
+                            this.displayMessage({
+                                type: 'bot',
+                                content: response.message,
+                                suggestions: response.suggestions || [],
+                                timestamp: new Date()
+                            });
+                        } else {
+                            throw new Error(response.error);
+                        }
+                    } catch (error) {
+                        this.hideTypingIndicator();
+                        this.handleError(error, suggestion.text);
+                    }
+                }, 500); // Small delay for better UX
+
+                // Analytics
+                this.trackEvent('suggestion_clicked', { suggestion: suggestion.text, action: suggestion.action });
+            }
+
+            showTypingIndicator() {
+                this.isLoading = true;
+                this.updateSendButton(false);
+
+                const messagesContainer = document.getElementById('hk-chat-messages');
+                const typingEl = document.createElement('div');
+                typingEl.className = 'hk-message bot';
+                typingEl.id = 'hk-typing-indicator';
+
+                const indicatorEl = document.createElement('div');
+                indicatorEl.className = 'hk-typing-indicator';
+                indicatorEl.innerHTML = `
+                    <div class="hk-typing-dots">
+                        <div class="hk-typing-dot"></div>
+                        <div class="hk-typing-dot"></div>
+                        <div class="hk-typing-dot"></div>
+                    </div>
+                `;
+
+                typingEl.appendChild(indicatorEl);
+                messagesContainer.appendChild(typingEl);
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                this.isLoading = false;
+                const typingEl = document.getElementById('hk-typing-indicator');
+                if (typingEl) {
+                    typingEl.remove();
+                }
+                this.updateSendButton(true);
+            }
+
+            updateSendButton(enabled) {
+                const sendBtn = document.getElementById('hk-send-button');
+                const input = document.getElementById('hk-chat-input-field');
+                const hasText = input.value.trim().length > 0;
+                sendBtn.disabled = !enabled || !hasText;
+            }
+
+            handleError(error, originalMessage) {
+                console.error('Chatbot error:', error);
+
+                let errorMessage = "I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.";
+                
+                if (this.retryCount < this.config.maxRetries) {
+                    this.retryCount++;
+                    errorMessage += ` (Attempt ${this.retryCount}/${this.config.maxRetries})`;
+                    
+                    // Add retry button
+                    setTimeout(() => {
+                        this.displayMessage({
+                            type: 'bot',
+                            content: errorMessage,
+                            suggestions: [
+                                { text: "Try again", action: "retry", originalMessage }
+                            ],
+                            timestamp: new Date()
+                        });
+                    }, 1000);
+                } else {
+                    this.displayMessage({
+                        type: 'bot',
+                        content: errorMessage + " You can also contact our support team directly.",
+                        suggestions: [
+                            { text: "Contact Support", action: "contact_support" }
+                        ],
+                        timestamp: new Date()
+                    });
+                }
+
+                // Analytics
+                this.trackEvent('error_occurred', { error: error.message, retry_count: this.retryCount });
+            }
+
+            scrollToBottom() {
+                const messagesContainer = document.getElementById('hk-chat-messages');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            formatTime(timestamp) {
+                return new Date(timestamp).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+
+            announceToScreenReader(message) {
+                const announcement = document.createElement('div');
+                announcement.className = 'hk-sr-only';
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.textContent = `Bot says: ${message}`;
+                document.body.appendChild(announcement);
+                
+                setTimeout(() => {
+                    document.body.removeChild(announcement);
+                }, 1000);
+            }
+
+            trackEvent(event, data = {}) {
+                // Analytics tracking - integrate with your analytics platform
+                console.log('📊 Event:', event, data);
+                
+                // Example: Google Analytics
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', event, {
+                        event_category: 'chatbot',
+                        event_label: data.message || '',
+                        custom_map: data
+                    });
+                }
+
+                // Example: Custom analytics
+                if (window.hkAnalytics) {
+                    window.hkAnalytics.track(event, {
+                        ...data,
+                        sessionId: this.sessionId,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }
+
+            // Public API methods
+            sendCustomMessage(message, intent = null) {
+                const input = document.getElementById('hk-chat-input-field');
+                input.value = message;
+                this.sendMessage();
+            }
+
+            openChatWithMessage(message) {
+                this.openChat();
+                setTimeout(() => {
+                    this.sendCustomMessage(message);
+                }, 500);
+            }
+
+            destroy() {
+                // Cleanup event listeners and data
+                this.cleanupSession();
+                const container = document.getElementById('hk-chatbot-container');
+                if (container) {
+                    container.remove();
+                }
+            }
+        }
+
+        // Initialize chatbot when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration - can be customized per website
+            const chatbotConfig = {
+                apiEndpoint: 'http://localhost:5000/api/chatbot/smart-search',
+                sessionTimeout: 30 * 60 * 1000, // 30 minutes
+                maxRetries: 3,
+                retryDelay: 1000
+            };
+
+            // Initialize the chatbot
+            window.hkChatbot = new HKChatbot(chatbotConfig);
+
+            // Expose API for external use
+            window.HKChatbot = {
+                open: () => window.hkChatbot.openChat(),
+                close: () => window.hkChatbot.closeChat(),
+                sendMessage: (message, intent) => window.hkChatbot.sendCustomMessage(message, intent),
+                openWithMessage: (message) => window.hkChatbot.openChatWithMessage(message)
+            };
+
+            console.log('💎 HK Chatbot ready! Use window.HKChatbot API for custom interactions.');
+        });
+    </script>
+</body>
+</html>
